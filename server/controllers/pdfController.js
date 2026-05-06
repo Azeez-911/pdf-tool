@@ -74,3 +74,43 @@ exports.splitPDF = async (req, res) => {
     res.status(500).send("Error splitting PDF");
   }
 };
+const { exec } = require("child_process");
+
+exports.compressPDF = async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).send("No file uploaded");
+    }
+
+    const inputPath = file.path;
+    const outputPath = `outputs/compressed-${Date.now()}.pdf`;
+
+const command = `"C:\\Program Files\\gs\\gs10.07.0\\bin\\gswin64c.exe" \
+-sDEVICE=pdfwrite \
+-dCompatibilityLevel=1.4 \
+-dPDFSETTINGS=/screen \
+-dDownsampleColorImages=true \
+-dColorImageResolution=72 \
+-dGrayImageResolution=72 \
+-dMonoImageResolution=72 \
+-dNOPAUSE \
+-dQUIET \
+-dBATCH \
+-sOutputFile="${outputPath}" \
+"${inputPath}"`;
+    exec(command, (error) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send("Compression failed");
+      }
+
+      res.download(outputPath);
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error compressing PDF");
+  }
+};
